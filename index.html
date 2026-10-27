@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management System Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full font-sans text-slate-800 antialiased overflow-hidden flex flex-col">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all scale-95 opacity-0 duration-200" id="confirm-modal-box">
+            <div class="flex items-center gap-4 mb-4">
+                <div id="confirm-icon-wrap" class="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <h3 id="confirm-title" class="text-lg font-bold text-slate-900">Are you sure?</h3>
+                    <p id="confirm-message" class="text-sm text-slate-500 mt-1">This action cannot be undone.</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button id="confirm-cancel" class="px-4 py-2.5 rounded-xl border border-slate-200 font-medium text-slate-700 hover:bg-slate-50 transition">Cancel</button>
+                <button id="confirm-ok" class="px-4 py-2.5 rounded-xl bg-rose-600 font-medium text-white hover:bg-rose-700 shadow-sm shadow-rose-200 transition">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Details Modal -->
+    <div id="student-detail-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 transform transition-all scale-95 opacity-0 duration-200 overflow-y-auto max-h-[90vh]" id="student-detail-box">
+            <div class="flex justify-between items-start pb-4 border-b border-slate-100 mb-6">
+                <div class="flex items-center gap-4">
+                    <img id="detail-avatar" src="" alt="Avatar" class="w-16 h-16 rounded-full object-cover border-2 border-indigo-100 shadow-md">
+                    <div>
+                        <h3 id="detail-name" class="text-xl font-bold text-slate-900">Student Name</h3>
+                        <p id="detail-email" class="text-sm text-slate-500">email@example.com</p>
+                        <span id="detail-status" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold mt-1">Active</span>
+                    </div>
+                </div>
+                <button onclick="closeStudentDetailModal()" class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Student ID</span>
+                    <p id="detail-id" class="text-sm font-semibold text-slate-800 mt-1">STU-1001</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Department</span>
+                    <p id="detail-dept" class="text-sm font-semibold text-slate-800 mt-1">Computer Science</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Enrolled Course</span>
+                    <p id="detail-course" class="text-sm font-semibold text-slate-800 mt-1">Web Development</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Gender</span>
+                    <p id="detail-gender" class="text-sm font-semibold text-slate-800 mt-1">Male</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Phone Number</span>
+                    <p id="detail-phone" class="text-sm font-semibold text-slate-800 mt-1">+1 555-0192</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Admission Date</span>
+                    <p id="detail-date" class="text-sm font-semibold text-slate-800 mt-1">2024-01-15</p>
+                </div>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Address</span>
+                <p id="detail-address" class="text-sm font-semibold text-slate-800 mt-1">123 Academic Way, University City</p>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeStudentDetailModal()" class="px-5 py-2.5 rounded-xl bg-slate-200 text-slate-700 font-medium hover:bg-slate-300 transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Add/Edit Modal -->
+    <div id="student-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6 transform transition-all scale-95 opacity-0 duration-200 overflow-y-auto max-h-[90vh]" id="student-modal-box">
+            <div class="flex justify-between items-center pb-4 border-b border-slate-100 mb-6">
+                <h3 id="student-modal-title" class="text-xl font-bold text-slate-900">Add New Student</h3>
+                <button onclick="closeStudentModal()" class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="student-form" onsubmit="handleStudentSubmit(event)" class="space-y-4">
+                <input type="hidden" id="student-edit-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Full Name *</label>
+                        <input type="text" id="form-name" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Email Address *</label>
+                        <input type="email" id="form-email" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Phone Number *</label>
+                        <input type="text" id="form-phone" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Gender *</label>
+                        <select id="form-gender" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm bg-white">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Department *</label>
+                        <select id="form-dept" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm bg-white">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Course *</label>
+                        <select id="form-course" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm bg-white">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Admission Date *</label>
+                        <input type="date" id="form-date" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Status *</label>
+                        <select id="form-status" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm bg-white">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="Suspended">Suspended</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Address *</label>
+                    <textarea id="form-address" rows="2" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeStudentModal()" class="px-5 py-2.5 rounded-xl border border-slate-200 font-medium text-slate-700 hover:bg-slate-50 transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 font-medium text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition">Save Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Course Add/Edit Modal -->
+    <div id="course-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all scale-95 opacity-0 duration-200" id="course-modal-box">
+            <div class="flex justify-between items-center pb-4 border-b border-slate-100 mb-6">
+                <h3 id="course-modal-title" class="text-xl font-bold text-slate-900">Add New Course</h3>
+                <button onclick="closeCourseModal()" class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="course-form" onsubmit="handleCourseSubmit(event)" class="space-y-4">
+                <input type="hidden" id="course-edit-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Course Name *</label>
+                    <input type="text" id="course-form-name" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Department *</label>
+                    <select id="course-form-dept" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm bg-white">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Credits *</label>
+                        <input type="number" id="course-form-credits" min="1" max="10" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Semester *</label>
+                        <select id="course-form-semester" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm bg-white">
+                            <option value="Semester 1">Semester 1</option>
+                            <option value="Semester 2">Semester 2</option>
+                            <option value="Semester 3">Semester 3</option>
+                            <option value="Semester 4">Semester 4</option>
+                            <option value="Semester 5">Semester 5</option>
+                            <option value="Semester 6">Semester 6</option>
+                            <option value="Semester 7">Semester 7</option>
+                            <option value="Semester 8">Semester 8</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeCourseModal()" class="px-5 py-2.5 rounded-xl border border-slate-200 font-medium text-slate-700 hover:bg-slate-50 transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 font-medium text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition">Save Course</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Department Add/Edit Modal -->
+    <div id="dept-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all scale-95 opacity-0 duration-200" id="dept-modal-box">
+            <div class="flex justify-between items-center pb-4 border-b border-slate-100 mb-6">
+                <h3 id="dept-modal-title" class="text-xl font-bold text-slate-900">Add New Department</h3>
+                <button onclick="closeDeptModal()" class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="dept-form" onsubmit="handleDeptSubmit(event)" class="space-y-4">
+                <input type="hidden" id="dept-edit-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Department Name *</label>
+                    <input type="text" id="dept-form-name" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Head of Department (HOD) *</label>
+                    <input type="text" id="dept-form-hod" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Description *</label>
+                    <textarea id="dept-form-desc" rows="3" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeDeptModal()" class="px-5 py-2.5 rounded-xl border border-slate-200 font-medium text-slate-700 hover:bg-slate-50 transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 font-medium text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition">Save Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Layout Wrapper -->
+    <div class="flex h-full w-full overflow-hidden">
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 transition-all duration-300 z-30 fixed lg:static inset-y-0 left-0 -translate-x-full lg:translate-x-0">
+            <!-- Sidebar Header -->
+            <div class="h-16 flex items-center justify-between px-6 border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-lg shadow-indigo-500/30">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <span class="font-bold text-white tracking-wide text-lg sidebar-text">EduAdmin</span>
+                </div>
+                <button onclick="toggleSidebar()" class="lg:hidden text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+                <a href="#" onclick="switchTab('dashboard')" class="nav-link flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition active group" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-pie w-5 text-center text-base"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+                <a href="#" onclick="switchTab('students')" class="nav-link flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition group" data-tab="students">
+                    <i class="fa-solid fa-user-graduate w-5 text-center text-base"></i>
+                    <span class="sidebar-text">Students</span>
+                </a>
+                <a href="#" onclick="switchTab('courses')" class="nav-link flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition group" data-tab="courses">
+                    <i class="fa-solid fa-book-open w-5 text-center text-base"></i>
+                    <span class="sidebar-text">Courses</span>
+                </a>
+                <a href="#" onclick="switchTab('departments')" class="nav-link flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition group" data-tab="departments">
+                    <i class="fa-solid fa-building-columns w-5 text-center text-base"></i>
+                    <span class="sidebar-text">Departments</span>
+                </a>
+                <a href="#" onclick="switchTab('attendance')" class="nav-link flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition group" data-tab="attendance">
+                    <i class="fa-solid fa-clipboard-user w-5 text-center text-base"></i>
+                    <span class="sidebar-text">Attendance</span>
+                </a>
+                <a href="#" onclick="switchTab('reports')" class="nav-link flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition group" data-tab="reports">
+                    <i class="fa-solid fa-file-lines w-5 text-center text-base"></i>
+                    <span class="sidebar-text">Reports</span>
+                </a>
+            </nav>
+
+            <!-- Sidebar Footer -->
+            <div class="p-4 border-t border-slate-800">
+                <button onclick="confirmResetDemoData()" class="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl bg-slate-800 text-rose-400 hover:bg-slate-700/80 hover:text-rose-300 font-medium text-xs transition border border-slate-700/50">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span class="sidebar-text">Reset Demo Data</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Content Area -->
+        <div class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
+            <!-- Top Navbar -->
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-20">
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleSidebar()" class="w-10 h-10 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center transition">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 id="page-title" class="text-xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <!-- Quick Stats Pill -->
+                    <div class="hidden sm:flex items-center gap-2 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-700">
+                        <i class="fa-solid fa-shield-halved text-indigo-600"></i>
+                        <span>Admin Portal v2.4</span>
+                    </div>
+                    <!-- User Profile Avatar -->
+                    <div class="flex items-center gap-3 pl-3 border-l border-slate-200">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Admin" class="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm">
+                        <div class="hidden md:block text-left">
+                            <h4 class="text-xs font-bold text-slate-900">Dr. Eleanor Vance</h4>
+                            <p class="text-[10px] text-slate-500 font-medium">System Registrar</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Scrollable Content View -->
+            <main class="flex-1 overflow-y-auto p-6 md:p-8">
+
+                <!-- ================= TAB 1: DASHBOARD ================= -->
+                <div id="tab-dashboard" class="tab-content space-y-6">
+                    <!-- Stat Cards Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Students</p>
+                                <h3 id="stat-total-students" class="text-3xl font-extrabold text-slate-900 mt-1">0</h3>
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 mt-2">
+                                    <i class="fa-solid fa-arrow-trend-up"></i> +12% this semester
+                                </span>
+                            </div>
+                            <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl shadow-sm">
+                                <i class="fa-solid fa-user-graduate"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Courses</p>
+                                <h3 id="stat-total-courses" class="text-3xl font-extrabold text-slate-900 mt-1">0</h3>
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 mt-2">
+                                    <i class="fa-solid fa-book"></i> Active catalog
+                                </span>
+                            </div>
+                            <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl shadow-sm">
+                                <i class="fa-solid fa-book-open"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Departments</p>
+                                <h3 id="stat-total-depts" class="text-3xl font-extrabold text-slate-900 mt-1">0</h3>
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 mt-2">
+                                    <i class="fa-solid fa-building"></i> Fully accredited
+                                </span>
+                            </div>
+                            <div class="w-14 h-14 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center text-2xl shadow-sm">
+                                <i class="fa-solid fa-building-columns"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Avg. Attendance</p>
+                                <h3 id="stat-avg-attendance" class="text-3xl font-extrabold text-slate-900 mt-1">0%</h3>
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 mt-2">
+                                    <i class="fa-solid fa-circle-check"></i> Excellent rate
+                                </span>
+                            </div>
+                            <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-sm">
+                                <i class="fa-solid fa-clipboard-user"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Enrollment Trends Chart -->
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm lg:col-span-2 flex flex-col">
+                            <div class="flex justify-between items-center mb-6">
+                                <div>
+                                    <h3 class="text-base font-bold text-slate-900">Department Enrollment Distribution</h3>
+                                    <p class="text-xs text-slate-500">Number of enrolled students per department</p>
+                                </div>
+                                <span class="px-3 py-1 bg-slate-100 rounded-xl text-xs font-semibold text-slate-600">Real-time</span>
+                            </div>
+                            <div class="relative flex-1 min-h-[280px]">
+                                <canvas id="enrollmentChart"></canvas>
+                            </div>
+                        </div>
+                        <!-- Gender Ratio Chart -->
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col">
+                            <div class="flex justify-between items-center mb-6">
+                                <div>
+                                    <h3 class="text-base font-bold text-slate-900">Gender Breakdown</h3>
+                                    <p class="text-xs text-slate-500">Student demographic ratios</p>
+                                </div>
+                            </div>
+                            <div class="relative flex-1 min-h-[280px] flex items-center justify-center">
+                                <canvas id="genderChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Students Table -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900">Recently Enrolled Students</h3>
+                                <p class="text-xs text-slate-500">Latest additions to the academic roster</p>
+                            </div>
+                            <button onclick="switchTab('students')" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700">View All →</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                        <th class="py-3 px-6">Student</th>
+                                        <th class="py-3 px-6">ID</th>
+                                        <th class="py-3 px-6">Department</th>
+                                        <th class="py-3 px-6">Course</th>
+                                        <th class="py-3 px-6">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-students-tbody" class="divide-y divide-slate-100 text-sm text-slate-700 font-medium">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= TAB 2: STUDENTS ================= -->
+                <div id="tab-students" class="tab-content space-y-6 hidden">
+                    <!-- Header Action Bar -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+                        <div class="flex flex-wrap items-center gap-3 flex-1">
+                            <!-- Search Input -->
+                            <div class="relative flex-1 min-w-[240px]">
+                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </span>
+                                <input type="text" id="student-search" oninput="renderStudentsTable()" placeholder="Search by name, email or ID..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm">
+                            </div>
+                            <!-- Department Filter -->
+                            <select id="student-filter-dept" onchange="renderStudentsTable()" class="px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm bg-white">
+                                <option value="">All Departments</option>
+                            </select>
+                            <!-- Status Filter -->
+                            <select id="student-filter-status" onchange="renderStudentsTable()" class="px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm bg-white">
+                                <option value="">All Status</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                                <option value="Suspended">Suspended</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="exportStudentsCSV()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-sm transition flex items-center gap-2">
+                                <i class="fa-solid fa-download text-slate-500"></i> Export CSV
+                            </button>
+                            <button onclick="openStudentModal()" class="px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition flex items-center gap-2">
+                                <i class="fa-solid fa-plus"></i> Add Student
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Students Table Container -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 text-xs font-bold uppercase tracking-wider cursor-pointer">
+                                        <th class="py-3 px-6" onclick="sortStudents('name')">Student Name <i class="fa-solid fa-sort ml-1"></i></th>
+                                        <th class="py-3 px-6" onclick="sortStudents('studentId')">ID <i class="fa-solid fa-sort ml-1"></i></th>
+                                        <th class="py-3 px-6" onclick="sortStudents('department')">Department <i class="fa-solid fa-sort ml-1"></i></th>
+                                        <th class="py-3 px-6">Course</th>
+                                        <th class="py-3 px-6" onclick="sortStudents('status')">Status <i class="fa-solid fa-sort ml-1"></i></th>
+                                        <th class="py-3 px-6 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="students-tbody" class="divide-y divide-slate-100 text-sm text-slate-700 font-medium">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Pagination Bar -->
+                        <div class="p-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <span id="pagination-info" class="text-xs text-slate-500 font-medium">Showing 1 to 10 of 15 entries</span>
+                            <div class="flex items-center gap-1.5" id="pagination-controls">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= TAB 3: COURSES ================= -->
+                <div id="tab-courses" class="tab-content space-y-6 hidden">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex justify-between items-center">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Course Catalog Management</h3>
+                            <p class="text-xs text-slate-500">Manage all university courses and curriculum details</p>
+                        </div>
+                        <button onclick="openCourseModal()" class="px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Add Course
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="courses-grid">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- ================= TAB 4: DEPARTMENTS ================= -->
+                <div id="tab-departments" class="tab-content space-y-6 hidden">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex justify-between items-center">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Academic Departments</h3>
+                            <p class="text-xs text-slate-500">University faculty and structural units</p>
+                        </div>
+                        <button onclick="openDeptModal()" class="px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Add Department
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="departments-grid">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- ================= TAB 5: ATTENDANCE ================= -->
+                <div id="tab-attendance" class="tab-content space-y-6 hidden">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Daily Attendance Tracking</h3>
+                            <p class="text-xs text-slate-500">Mark or inspect daily student attendance status</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="date" id="attendance-date" onchange="renderAttendanceTable()" class="px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm bg-white">
+                            <button onclick="saveAttendance()" class="px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-medium text-sm hover:bg-emerald-700 shadow-sm shadow-emerald-200 transition flex items-center gap-2">
+                                <i class="fa-solid fa-check"></i> Save Attendance
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                        <th class="py-3 px-6">Student Name</th>
+                                        <th class="py-3 px-6">ID</th>
+                                        <th class="py-3 px-6">Department</th>
+                                        <th class="py-3 px-6 text-center">Status (Present / Absent / Late)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendance-tbody" class="divide-y divide-slate-100 text-sm text-slate-700 font-medium">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= TAB 6: REPORTS ================= -->
+                <div id="tab-reports" class="tab-content space-y-6 hidden">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <h3 class="text-base font-bold text-slate-900 mb-1">Academic Summary Reports</h3>
+                        <p class="text-xs text-slate-500 mb-6">Download consolidated institutional reports for auditing</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between">
+                                <div>
+                                    <div class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl mb-4">
+                                        <i class="fa-solid fa-file-excel"></i>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 text-base">Student Master Report</h4>
+                                    <p class="text-xs text-slate-500 mt-1">Complete CSV spreadsheet containing all student profiles, contacts, and departments.</p>
+                                </div>
+                                <button onclick="exportStudentsCSV()" class="mt-6 w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs transition shadow-sm">Download CSV</button>
+                            </div>
+                            <div class="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between">
+                                <div>
+                                    <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl mb-4">
+                                        <i class="fa-solid fa-file-lines"></i>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 text-base">Course Catalog Summary</h4>
+                                    <p class="text-xs text-slate-500 mt-1">Export summary of all active courses, credit structures, and assigned departments.</p>
+                                </div>
+                                <button onclick="exportCoursesReport()" class="mt-6 w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs transition shadow-sm">Download Report</button>
+                            </div>
+                            <div class="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between">
+                                <div>
+                                    <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mb-4">
+                                        <i class="fa-solid fa-clipboard-check"></i>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 text-base">Attendance Analytics</h4>
+                                    <p class="text-xs text-slate-500 mt-1">Export detailed attendance history logs recorded across all active instructional dates.</p>
+                                </div>
+                                <button onclick="exportAttendanceReport()" class="mt-6 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs transition shadow-sm">Download Report</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Application Core Script -->
+    <script>
+        // Default Dummy Data
+        const defaultStudents = [
+            { id: 1, studentId: "STU-1001", name: "Alexander Wright", email: "alex.wright@edu.uni", phone: "+1 555-0142", gender: "Male", department: "Computer Science", course: "Web Development", status: "Active", address: "742 Evergreen Terrace, Springfield", date: "2024-01-15", avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150" },
+            { id: 2, studentId: "STU-1002", name: "Sophia Martinez", email: "sophia.m@edu.uni", phone: "+1 555-0189", gender: "Female", department: "Business Administration", course: "Financial Accounting", status: "Active", address: "128 Baker Street, London", date: "2024-01-18", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150" },
+            { id: 3, studentId: "STU-1003", name: "Liam Johnson", email: "liam.j@edu.uni", phone: "+1 555-0123", gender: "Male", department: "Mechanical Engineering", course: "Thermodynamics", status: "Active", address: "45 Grand Avenue, Chicago", date: "2024-01-20", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" },
+            { id: 4, studentId: "STU-1004", name: "Emma Watson", email: "emma.w@edu.uni", phone: "+1 555-0155", gender: "Female", department: "Art & Design", course: "Digital Media Arts", status: "Active", address: "10 Downing Street, Oxford", date: "2024-02-01", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150" },
+            { id: 5, studentId: "STU-1005", name: "Noah Brown", email: "noah.b@edu.uni", phone: "+1 555-0167", gender: "Male", department: "Computer Science", course: "Data Structures", status: "Inactive", address: "89 Silicon Valley, CA", date: "2024-02-05", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150" },
+            { id: 6, studentId: "STU-1006", name: "Olivia Davis", email: "olivia.d@edu.uni", phone: "+1 555-0178", gender: "Female", department: "Business Administration", course: "Business Ethics", status: "Active", address: "33 Wall Street, New York", date: "2024-02-10", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150" },
+            { id: 7, studentId: "STU-1007", name: "Ethan Miller", email: "ethan.m@edu.uni", phone: "+1 555-0199", gender: "Male", department: "Mechanical Engineering", course: "Fluid Mechanics", status: "Active", address: "55 Industrial Pkwy, Detroit", date: "2024-02-12", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150" },
+            { id: 8, studentId: "STU-1008", name: "Ava Wilson", email: "ava.w@edu.uni", phone: "+1 555-0111", gender: "Female", department: "Computer Science", course: "Web Development", status: "Active", address: "78 Tech Blvd, Seattle", date: "2024-02-15", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150" },
+            { id: 9, studentId: "STU-1009", name: "James Taylor", email: "james.t@edu.uni", phone: "+1 555-0122", gender: "Male", department: "Art & Design", course: "UI/UX Principles", status: "Suspended", address: "12 Creative Lane, Austin", date: "2024-02-20", avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150" },
+            { id: 10, studentId: "STU-1010", name: "Isabella Anderson", email: "isabella.a@edu.uni", phone: "+1 555-0133", gender: "Female", department: "Business Administration", course: "Financial Accounting", status: "Active", address: "90 Market St, San Francisco", date: "2024-02-22", avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150" },
+            { id: 11, studentId: "STU-1011", name: "Lucas Thomas", email: "lucas.t@edu.uni", phone: "+1 555-0144", gender: "Male", department: "Mechanical Engineering", course: "Thermodynamics", status: "Active", address: "14 Engine Rd, Houston", date: "2024-03-01", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150" },
+            { id: 12, studentId: "STU-1012", name: "Mia Jackson", email: "mia.j@edu.uni", phone: "+1 555-0166", gender: "Female", department: "Computer Science", course: "Data Structures", status: "Active", address: "88 Binary Way, Boston", date: "2024-03-04", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" },
+            { id: 13, studentId: "STU-1013", name: "Benjamin White", email: "ben.w@edu.uni", phone: "+1 555-0177", gender: "Male", department: "Art & Design", course: "Digital Media Arts", status: "Active", address: "77 Palette St, Portland", date: "2024-03-08", avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150" },
+            { id: 14, studentId: "STU-1014", name: "Charlotte Harris", email: "charlotte.h@edu.uni", phone: "+1 555-0188", gender: "Female", department: "Business Administration", course: "Business Ethics", status: "Active", address: "44 Commerce Ave, Atlanta", date: "2024-03-10", avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150" },
+            { id: 15, studentId: "STU-1015", name: "Henry Martin", email: "henry.m@edu.uni", phone: "+1 555-0199", gender: "Male", department: "Mechanical Engineering", course: "Fluid Mechanics", status: "Inactive", address: "99 Gear St, Denver", date: "2024-03-15", avatar: "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=150" }
+        ];
+
+        const defaultCourses = [
+            { id: 1, name: "Web Development", department: "Computer Science", credits: 4, semester: "Semester 3" },
+            { id: 2, name: "Data Structures", department: "Computer Science", credits: 4, semester: "Semester 2" },
+            { id: 3, name: "Financial Accounting", department: "Business Administration", credits: 3, semester: "Semester 1" },
+            { id: 4, name: "Thermodynamics", department: "Mechanical Engineering", credits: 4, semester: "Semester 3" },
+            { id: 5, name: "Digital Media Arts", department: "Art & Design", credits: 3, semester: "Semester 2" }
+        ];
+
+        const defaultDepartments = [
+            { id: 1, name: "Computer Science", hod: "Dr. Alan Turing", desc: "Focuses on software engineering, algorithms, artificial intelligence, and computing architectures." },
+            { id: 2, name: "Business Administration", hod: "Dr. Peter Drucker", desc: "Equips students with leadership, management, finance, and entrepreneurial expertise." },
+            { id: 3, name: "Mechanical Engineering", hod: "Dr. Nikola Tesla", desc: "Covers mechanics, robotics, thermal systems, and industrial manufacturing design." },
+            { id: 4, name: "Art & Design", hod: "Dr. Leonardo da Vinci", desc: "Explores visual arts, interactive UI/UX, digital media creation, and aesthetic principles." }
+        ];
+
+        // State variables
+        let students = JSON.parse(localStorage.getItem('sms_students')) || defaultStudents;
+        let courses = JSON.parse(localStorage.getItem('sms_courses')) || defaultCourses;
+        let departments = JSON.parse(localStorage.getItem('sms_departments')) || defaultDepartments;
+        let attendance = JSON.parse(localStorage.getItem('sms_attendance')) || {};
+
+        let currentPage = 1;
+        const rowsPerPage = 7;
+        let currentSortField = 'name';
+        let currentSortDirection = 'asc';
+
+        let enrollmentChartInstance = null;
+        let genderChartInstance = null;
+
+        // Initialization on window load
+        window.onload = function() {
+            initApp();
+        };
+
+        function initApp() {
+            saveToLocalStorage();
+            populateDropdowns();
+            switchTab('dashboard');
+            document.getElementById('attendance-date').valueAsDate = new Date();
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('sms_students', JSON.stringify(students));
+            localStorage.setItem('sms_courses', JSON.stringify(courses));
+            localStorage.setItem('sms_departments', JSON.stringify(departments));
+            localStorage.setItem('sms_attendance', JSON.stringify(attendance));
+        }
+
+        // Toast Notification System
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgCol = type === 'success' ? 'bg-slate-900 text-white' : type === 'error' ? 'bg-rose-600 text-white' : 'bg-amber-600 text-white';
+            const icon = type === 'success' ? 'fa-circle-check text-emerald-400' : type === 'error' ? 'fa-circle-exclamation text-rose-200' : 'fa-triangle-exclamation text-amber-200';
+            
+            toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl ${bgCol} text-sm font-medium transform transition-all duration-300 translate-y-2 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-base"></i><span>${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Custom Confirmation Modal
+        let confirmCallback = null;
+        function showConfirmDialog(title, message, callback) {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-message').innerText = message;
+            confirmCallback = callback;
+            
+            const modal = document.getElementById('confirm-modal');
+            const box = document.getElementById('confirm-modal-box');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => { box.classList.remove('scale-95', 'opacity-0'); }, 10);
+        }
+
+        document.getElementById('confirm-cancel').onclick = function() {
+            const modal = document.getElementById('confirm-modal');
+            const box = document.getElementById('confirm-modal-box');
+            box.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.remove('flex'); modal.classList.add('hidden'); }, 200);
+        };
+
+        document.getElementById('confirm-ok').onclick = function() {
+            if (confirmCallback) confirmCallback();
+            document.getElementById('confirm-cancel').click();
+        };
+
+        // Sidebar Toggle for Mobile & Collapsible View
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            // Update Nav link styles
+            document.querySelectorAll('.nav-link').forEach(el => {
+                el.classList.remove('bg-indigo-600', 'text-white', 'shadow-md', 'shadow-indigo-600/30');
+                el.classList.add('text-slate-400', 'hover:bg-slate-800', 'hover:text-white');
+            });
+            const activeLink = document.querySelector(`.nav-link[data-tab="${tabId}"]`);
+            if (activeLink) {
+                activeLink.classList.remove('text-slate-400', 'hover:bg-slate-800', 'hover:text-white');
+                activeLink.classList.add('bg-indigo-600', 'text-white', 'shadow-md', 'shadow-indigo-600/30');
+            }
+
+            // Update Page Title
+            const titles = {
+                dashboard: 'Dashboard Overview',
+                students: 'Student Records Directory',
+                courses: 'Course Catalog Management',
+                departments: 'Academic Departments',
+                attendance: 'Daily Attendance Logs',
+                reports: 'Institutional Reports'
+            };
+            document.getElementById('page-title').innerText = titles[tabId] || 'Dashboard';
+
+            // Render specific tab data
+            if (tabId === 'dashboard') {
+                renderDashboard();
+            } else if (tabId === 'students') {
+                renderStudentsTable();
+            } else if (tabId === 'courses') {
+                renderCoursesGrid();
+            } else if (tabId === 'departments') {
+                renderDepartmentsGrid();
+            } else if (tabId === 'attendance') {
+                renderAttendanceTable();
+            }
+
+            if (window.innerWidth < 1024) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+            }
+        }
+
+        // Populate Dropdowns dynamically
+        function populateDropdowns() {
+            const deptSelects = [document.getElementById('form-dept'), document.getElementById('course-form-dept'), document.getElementById('student-filter-dept')];
+            deptSelects.forEach((select, idx) => {
+                if (!select) return;
+                const currentVal = select.value;
+                select.innerHTML = idx === 2 ? '<option value="">All Departments</option>' : '';
+                departments.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.name;
+                    opt.innerText = d.name;
+                    select.appendChild(opt);
+                });
+                select.value = currentVal;
+            });
+
+            const courseSelect = document.getElementById('form-course');
+            if (courseSelect) {
+                const currentCourse = courseSelect.value;
+                courseSelect.innerHTML = '';
+                courses.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.name;
+                    opt.innerText = c.name;
+                    courseSelect.appendChild(opt);
+                });
+                courseSelect.value = currentCourse;
+            }
+        }
+
+        // ================= DASHBOARD RENDERING & CHARTS =================
+        function renderDashboard() {
+            document.getElementById('stat-total-students').innerText = students.length;
+            document.getElementById('stat-total-courses').innerText = courses.length;
+            document.getElementById('stat-total-depts').innerText = departments.length;
+            
+            // Calculate average attendance roughly or dynamically
+            let totalRecords = Object.values(attendance).reduce((acc, curr) => acc + Object.keys(curr).length, 0);
+            let presentRecords = Object.values(attendance).reduce((acc, curr) => acc + Object.values(curr).filter(v => v === 'Present').length, 0);
+            let avgAtt = totalRecords > 0 ? Math.round((presentRecords / totalRecords) * 100) : 94;
+            document.getElementById('stat-avg-attendance').innerText = `${avgAtt}%`;
+
+            // Recent Students Table
+            const recentTbody = document.getElementById('recent-students-tbody');
+            recentTbody.innerHTML = '';
+            students.slice(-5).reverse().forEach(s => {
+                const statusBadge = s.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : s.status === 'Inactive' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200';
+                recentTbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3 px-6 flex items-center gap-3">
+                            <img src="${s.avatar}" class="w-9 h-9 rounded-full object-cover border border-slate-200" onerror="this.src='https://placehold.co/100x100/e2e8f0/475569?text=STU'">
+                            <div>
+                                <p class="font-bold text-slate-900">${s.name}</p>
+                                <p class="text-xs text-slate-400">${s.email}</p>
+                            </div>
+                        </td>
+                        <td class="py-3 px-6 text-slate-600 font-semibold">${s.studentId}</td>
+                        <td class="py-3 px-6 text-slate-600">${s.department}</td>
+                        <td class="py-3 px-6 text-slate-600">${s.course}</td>
+                        <td class="py-3 px-6"><span class="px-2.5 py-1 rounded-full text-xs font-semibold border ${statusBadge}">${s.status}</span></td>
+                    </tr>
+                `;
+            });
+
+            renderCharts();
+        }
+
+        function renderCharts() {
+            // Enrollment per Department Data
+            const deptCounts = {};
+            departments.forEach(d => deptCounts[d.name] = 0);
+            students.forEach(s => {
+                if (deptCounts[s.department] !== undefined) deptCounts[s.department]++;
+            });
+
+            const deptLabels = Object.keys(deptCounts);
+            const deptData = Object.values(deptCounts);
+
+            const ctxEnrollment = document.getElementById('enrollmentChart').getContext('2d');
+            if (enrollmentChartInstance) enrollmentChartInstance.destroy();
+            enrollmentChartInstance = new Chart(ctxEnrollment, {
+                type: 'bar',
+                data: {
+                    labels: deptLabels,
+                    datasets: [{
+                        label: 'Enrolled Students',
+                        data: deptData,
+                        backgroundColor: '#6366f1',
+                        borderRadius: 10,
+                        barThickness: 32
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { precision: 0 } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // Gender Distribution Data
+            const genderCounts = { Male: 0, Female: 0, Other: 0 };
+            students.forEach(s => {
+                if (genderCounts[s.gender] !== undefined) genderCounts[s.gender]++;
+            });
+
+            const ctxGender = document.getElementById('genderChart').getContext('2d');
+            if (genderChartInstance) genderChartInstance.destroy();
+            genderChartInstance = new Chart(ctxGender, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Male', 'Female', 'Other'],
+                    datasets: [{
+                        data: [genderCounts.Male, genderCounts.Female, genderCounts.Other],
+                        backgroundColor: ['#6366f1', '#ec4899', '#cbd5e1'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Inter', size: 12 } } } },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        // ================= STUDENT MANAGEMENT =================
+        function renderStudentsTable() {
+            const search = document.getElementById('student-search').value.toLowerCase();
+            const filterDept = document.getElementById('student-filter-dept').value;
+            const filterStatus = document.getElementById('student-filter-status').value;
+
+            let filtered = students.filter(s => {
+                const matchesSearch = s.name.toLowerCase().includes(search) || s.email.toLowerCase().includes(search) || s.studentId.toLowerCase().includes(search);
+                const matchesDept = filterDept === '' || s.department === filterDept;
+                const matchesStatus = filterStatus === '' || s.status === filterStatus;
+                return matchesSearch && matchesDept && matchesStatus;
+            });
+
+            // Sorting
+            filtered.sort((a, b) => {
+                let valA = a[currentSortField] || '';
+                let valB = b[currentSortField] || '';
+                if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            // Pagination
+            const totalPages = Math.ceil(filtered.length / rowsPerPage) || 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            const start = (currentPage - 1) * rowsPerPage;
+            const paginated = filtered.slice(start, start + rowsPerPage);
+
+            const tbody = document.getElementById('students-tbody');
+            tbody.innerHTML = '';
+
+            if (paginated.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">No students found matching criteria.</td></tr>`;
+            } else {
+                paginated.forEach(s => {
+                    const statusBadge = s.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : s.status === 'Inactive' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200';
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50/80 transition">
+                            <td class="py-3 px-6 flex items-center gap-3">
+                                <img src="${s.avatar}" class="w-9 h-9 rounded-full object-cover border border-slate-200" onerror="this.src='https://placehold.co/100x100/e2e8f0/475569?text=STU'">
+                                <div>
+                                    <p class="font-bold text-slate-900">${s.name}</p>
+                                    <p class="text-xs text-slate-400">${s.email}</p>
+                                </div>
+                            </td>
+                            <td class="py-3 px-6 text-slate-600 font-semibold">${s.studentId}</td>
+                            <td class="py-3 px-6 text-slate-600">${s.department}</td>
+                            <td class="py-3 px-6 text-slate-600">${s.course}</td>
+                            <td class="py-3 px-6"><span class="px-2.5 py-1 rounded-full text-xs font-semibold border ${statusBadge}">${s.status}</span></td>
+                            <td class="py-3 px-6 text-right space-x-2">
+                                <button onclick="viewStudent(${s.id})" class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition inline-flex items-center justify-center"><i class="fa-solid fa-eye text-xs"></i></button>
+                                <button onclick="editStudent(${s.id})" class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition inline-flex items-center justify-center"><i class="fa-solid fa-pen text-xs"></i></button>
+                                <button onclick="deleteStudent(${s.id})" class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition inline-flex items-center justify-center"><i class="fa-solid fa-trash text-xs"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // Pagination info & controls
+            document.getElementById('pagination-info').innerText = `Showing ${filtered.length > 0 ? start + 1 : 0} to ${Math.min(start + rowsPerPage, filtered.length)} of ${filtered.length} entries`;
+            
+            const controls = document.getElementById('pagination-controls');
+            controls.innerHTML = `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled class="opacity-40 cursor-not-allowed px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold"' : 'class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold hover:bg-slate-50"'}>Prev</button>
+                <span class="px-3 py-1.5 text-xs font-bold text-slate-700">${currentPage} / ${totalPages}</span>
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages || totalPages === 0 ? 'disabled class="opacity-40 cursor-not-allowed px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold"' : 'class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold hover:bg-slate-50"'}>Next</button>
+            `;
+        }
+
+        function sortStudents(field) {
+            if (currentSortField === field) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortField = field;
+                currentSortDirection = 'asc';
+            }
+            renderStudentsTable();
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderStudentsTable();
+        }
+
+        // Student Modal Actions
+        function openStudentModal(id = null) {
+            populateDropdowns();
+            const modal = document.getElementById('student-modal');
+            const box = document.getElementById('student-modal-box');
+            document.getElementById('student-form').reset();
+            document.getElementById('student-edit-id').value = '';
+            document.getElementById('student-modal-title').innerText = 'Add New Student';
+            document.getElementById('form-date').valueAsDate = new Date();
+
+            if (id) {
+                const s = students.find(item => item.id === id);
+                if (s) {
+                    document.getElementById('student-modal-title').innerText = 'Edit Student Record';
+                    document.getElementById('student-edit-id').value = s.id;
+                    document.getElementById('form-name').value = s.name;
+                    document.getElementById('form-email').value = s.email;
+                    document.getElementById('form-phone').value = s.phone;
+                    document.getElementById('form-gender').value = s.gender;
+                    document.getElementById('form-dept').value = s.department;
+                    document.getElementById('form-course').value = s.course;
+                    document.getElementById('form-date').value = s.date;
+                    document.getElementById('form-status').value = s.status;
+                    document.getElementById('form-address').value = s.address;
+                }
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => { box.classList.remove('scale-95', 'opacity-0'); }, 10);
+        }
+
+        function closeStudentModal() {
+            const modal = document.getElementById('student-modal');
+            const box = document.getElementById('student-modal-box');
+            box.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.remove('flex'); modal.classList.add('hidden'); }, 200);
+        }
+
+        function handleStudentSubmit(e) {
+            e.preventDefault();
+            const editId = document.getElementById('student-edit-id').value;
+            const name = document.getElementById('form-name').value;
+            const email = document.getElementById('form-email').value;
+            const phone = document.getElementById('form-phone').value;
+            const gender = document.getElementById('form-gender').value;
+            const department = document.getElementById('form-dept').value;
+            const course = document.getElementById('form-course').value;
+            const date = document.getElementById('form-date').value;
+            const status = document.getElementById('form-status').value;
+            const address = document.getElementById('form-address').value;
+
+            if (editId) {
+                const s = students.find(item => item.id == editId);
+                if (s) {
+                    s.name = name;
+                    s.email = email;
+                    s.phone = phone;
+                    s.gender = gender;
+                    s.department = department;
+                    s.course = course;
+                    s.date = date;
+                    s.status = status;
+                    s.address = address;
+                    showToast('Student record updated successfully!', 'success');
+                }
+            } else {
+                const newId = students.length > 0 ? Math.max(...students.map(i => i.id)) + 1 : 1;
+                const studentIdStr = `STU-${1000 + newId}`;
+                const avatars = [
+                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+                    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
+                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150"
+                ];
+                const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
+
+                students.push({
+                    id: newId,
+                    studentId: studentIdStr,
+                    name, email, phone, gender, department, course, status, address, date,
+                    avatar: randomAvatar
+                });
+                showToast('New student added successfully!', 'success');
+            }
+
+            saveToLocalStorage();
+            closeStudentModal();
+            renderStudentsTable();
+        }
+
+        function viewStudent(id) {
+            const s = students.find(item => item.id === id);
+            if (!s) return;
+
+            document.getElementById('detail-avatar').src = s.avatar;
+            document.getElementById('detail-name').innerText = s.name;
+            document.getElementById('detail-email').innerText = s.email;
+            document.getElementById('detail-id').innerText = s.studentId;
+            document.getElementById('detail-dept').innerText = s.department;
+            document.getElementById('detail-course').innerText = s.course;
+            document.getElementById('detail-gender').innerText = s.gender;
+            document.getElementById('detail-phone').innerText = s.phone;
+            document.getElementById('detail-date').innerText = s.date;
+            document.getElementById('detail-address').innerText = s.address;
+
+            const statusEl = document.getElementById('detail-status');
+            statusEl.innerText = s.status;
+            statusEl.className = `inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold mt-1 ${s.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`;
+
+            const modal = document.getElementById('student-detail-modal');
+            const box = document.getElementById('student-detail-box');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => { box.classList.remove('scale-95', 'opacity-0'); }, 10);
+        }
+
+        function closeStudentDetailModal() {
+            const modal = document.getElementById('student-detail-modal');
+            const box = document.getElementById('student-detail-box');
+            box.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.remove('flex'); modal.classList.add('hidden'); }, 200);
+        }
+
+        function editStudent(id) {
+            openStudentModal(id);
+        }
+
+        function deleteStudent(id) {
+            showConfirmDialog('Delete Student', 'Are you sure you want to remove this student record?', () => {
+                students = students.filter(s => s.id !== id);
+                saveToLocalStorage();
+                renderStudentsTable();
+                showToast('Student deleted successfully.', 'error');
+            });
+        }
+
+        // ================= COURSES MANAGEMENT =================
+        function renderCoursesGrid() {
+            const grid = document.getElementById('courses-grid');
+            grid.innerHTML = '';
+            courses.forEach(c => {
+                const studentCount = students.filter(s => s.course === c.name).length;
+                grid.innerHTML += `
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-3">
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700">${c.semester}</span>
+                                <div class="space-x-1">
+                                    <button onclick="editCourse(${c.id})" class="text-slate-400 hover:text-indigo-600 p-1"><i class="fa-solid fa-pen text-xs"></i></button>
+                                    <button onclick="deleteCourse(${c.id})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash text-xs"></i></button>
+                                </div>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-900">${c.name}</h4>
+                            <p class="text-xs font-semibold text-slate-500 mt-1"><i class="fa-solid fa-building-columns mr-1"></i> ${c.department}</p>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center text-xs">
+                            <span class="text-slate-500 font-medium">Credits: <strong class="text-slate-800">${c.credits}</strong></span>
+                            <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold">${studentCount} Enrolled</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openCourseModal(id = null) {
+            populateDropdowns();
+            const modal = document.getElementById('course-modal');
+            const box = document.getElementById('course-modal-box');
+            document.getElementById('course-form').reset();
+            document.getElementById('course-edit-id').value = '';
+            document.getElementById('course-modal-title').innerText = 'Add New Course';
+
+            if (id) {
+                const c = courses.find(item => item.id === id);
+                if (c) {
+                    document.getElementById('course-modal-title').innerText = 'Edit Course';
+                    document.getElementById('course-edit-id').value = c.id;
+                    document.getElementById('course-form-name').value = c.name;
+                    document.getElementById('course-form-dept').value = c.department;
+                    document.getElementById('course-form-credits').value = c.credits;
+                    document.getElementById('course-form-semester').value = c.semester;
+                }
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => { box.classList.remove('scale-95', 'opacity-0'); }, 10);
+        }
+
+        function closeCourseModal() {
+            const modal = document.getElementById('course-modal');
+            const box = document.getElementById('course-modal-box');
+            box.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.remove('flex'); modal.classList.add('hidden'); }, 200);
+        }
+
+        function handleCourseSubmit(e) {
+            e.preventDefault();
+            const editId = document.getElementById('course-edit-id').value;
+            const name = document.getElementById('course-form-name').value;
+            const department = document.getElementById('course-form-dept').value;
+            const credits = parseInt(document.getElementById('course-form-credits').value);
+            const semester = document.getElementById('course-form-semester').value;
+
+            if (editId) {
+                const c = courses.find(item => item.id == editId);
+                if (c) {
+                    c.name = name;
+                    c.department = department;
+                    c.credits = credits;
+                    c.semester = semester;
+                    showToast('Course updated successfully!', 'success');
+                }
+            } else {
+                const newId = courses.length > 0 ? Math.max(...courses.map(i => i.id)) + 1 : 1;
+                courses.push({ id: newId, name, department, credits, semester });
+                showToast('New course added successfully!', 'success');
+            }
+
+            saveToLocalStorage();
+            closeCourseModal();
+            renderCoursesGrid();
+        }
+
+        function editCourse(id) {
+            openCourseModal(id);
+        }
+
+        function deleteCourse(id) {
+            showConfirmDialog('Delete Course', 'Are you sure you want to delete this course?', () => {
+                courses = courses.filter(c => c.id !== id);
+                saveToLocalStorage();
+                renderCoursesGrid();
+                showToast('Course deleted successfully.', 'error');
+            });
+        }
+
+        // ================= DEPARTMENTS MANAGEMENT =================
+        function renderDepartmentsGrid() {
+            const grid = document.getElementById('departments-grid');
+            grid.innerHTML = '';
+            departments.forEach(d => {
+                const studentCount = students.filter(s => s.department === d.name).length;
+                const courseCount = courses.filter(c => c.department === d.name).length;
+                grid.innerHTML += `
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-xl shadow-sm">
+                                    <i class="fa-solid fa-building-columns"></i>
+                                </div>
+                                <div class="space-x-1">
+                                    <button onclick="editDept(${d.id})" class="text-slate-400 hover:text-indigo-600 p-1"><i class="fa-solid fa-pen text-xs"></i></button>
+                                    <button onclick="deleteDept(${d.id})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash text-xs"></i></button>
+                                </div>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-900">${d.name}</h4>
+                            <p class="text-xs font-semibold text-indigo-600 mt-0.5">HOD: ${d.hod}</p>
+                            <p class="text-xs text-slate-500 mt-2">${d.desc}</p>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold">
+                            <span class="text-slate-600"><i class="fa-solid fa-user-graduate mr-1 text-slate-400"></i> ${studentCount} Students</span>
+                            <span class="text-slate-600"><i class="fa-solid fa-book mr-1 text-slate-400"></i> ${courseCount} Courses</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openDeptModal(id = null) {
+            const modal = document.getElementById('dept-modal');
+            const box = document.getElementById('dept-modal-box');
+            document.getElementById('dept-form').reset();
+            document.getElementById('dept-edit-id').value = '';
+            document.getElementById('dept-modal-title').innerText = 'Add New Department';
+
+            if (id) {
+                const d = departments.find(item => item.id === id);
+                if (d) {
+                    document.getElementById('dept-modal-title').innerText = 'Edit Department';
+                    document.getElementById('dept-edit-id').value = d.id;
+                    document.getElementById('dept-form-name').value = d.name;
+                    document.getElementById('dept-form-hod').value = d.hod;
+                    document.getElementById('dept-form-desc').value = d.desc;
+                }
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => { box.classList.remove('scale-95', 'opacity-0'); }, 10);
+        }
+
+        function closeDeptModal() {
+            const modal = document.getElementById('dept-modal');
+            const box = document.getElementById('dept-modal-box');
+            box.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.remove('flex'); modal.classList.add('hidden'); }, 200);
+        }
+
+        function handleDeptSubmit(e) {
+            e.preventDefault();
+            const editId = document.getElementById('dept-edit-id').value;
+            const name = document.getElementById('dept-form-name').value;
+            const hod = document.getElementById('dept-form-hod').value;
+            const desc = document.getElementById('dept-form-desc').value;
+
+            if (editId) {
+                const d = departments.find(item => item.id == editId);
+                if (d) {
+                    d.name = name;
+                    d.hod = hod;
+                    d.desc = desc;
+                    showToast('Department updated successfully!', 'success');
+                }
+            } else {
+                const newId = departments.length > 0 ? Math.max(...departments.map(i => i.id)) + 1 : 1;
+                departments.push({ id: newId, name, hod, desc });
+                showToast('New department added successfully!', 'success');
+            }
+
+            saveToLocalStorage();
+            populateDropdowns();
+            closeDeptModal();
+            renderDepartmentsGrid();
+        }
+
+        function editDept(id) {
+            openDeptModal(id);
+        }
+
+        function deleteDept(id) {
+            showConfirmDialog('Delete Department', 'Are you sure you want to delete this department?', () => {
+                departments = departments.filter(d => d.id !== id);
+                saveToLocalStorage();
+                populateDropdowns();
+                renderDepartmentsGrid();
+                showToast('Department deleted successfully.', 'error');
+            });
+        }
+
+        // ================= ATTENDANCE TRACKING =================
+        function renderAttendanceTable() {
+            const dateStr = document.getElementById('attendance-date').value;
+            if (!attendance[dateStr]) {
+                attendance[dateStr] = {};
+                students.forEach(s => {
+                    attendance[dateStr][s.id] = 'Present'; // Default to Present
+                });
+            }
+
+            const tbody = document.getElementById('attendance-tbody');
+            tbody.innerHTML = '';
+
+            students.forEach(s => {
+                const currentStatus = attendance[dateStr][s.id] || 'Present';
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3 px-6 flex items-center gap-3">
+                            <img src="${s.avatar}" class="w-9 h-9 rounded-full object-cover border border-slate-200" onerror="this.src='https://placehold.co/100x100/e2e8f0/475569?text=STU'">
+                            <div>
+                                <p class="font-bold text-slate-900">${s.name}</p>
+                                <p class="text-xs text-slate-400">${s.email}</p>
+                            </div>
+                        </td>
+                        <td class="py-3 px-6 text-slate-600 font-semibold">${s.studentId}</td>
+                        <td class="py-3 px-6 text-slate-600">${s.department}</td>
+                        <td class="py-3 px-6 text-center">
+                            <div class="inline-flex rounded-xl p-1 bg-slate-100 border border-slate-200 gap-1">
+                                <button onclick="setAttendanceStatus(${s.id}, 'Present')" class="px-3 py-1 rounded-lg text-xs font-bold transition ${currentStatus === 'Present' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-200'}">Present</button>
+                                <button onclick="setAttendanceStatus(${s.id}, 'Absent')" class="px-3 py-1 rounded-lg text-xs font-bold transition ${currentStatus === 'Absent' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-200'}">Absent</button>
+                                <button onclick="setAttendanceStatus(${s.id}, 'Late')" class="px-3 py-1 rounded-lg text-xs font-bold transition ${currentStatus === 'Late' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-200'}">Late</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function setAttendanceStatus(studentId, status) {
+            const dateStr = document.getElementById('attendance-date').value;
+            if (!attendance[dateStr]) attendance[dateStr] = {};
+            attendance[dateStr][studentId] = status;
+            renderAttendanceTable();
+        }
+
+        function saveAttendance() {
+            saveToLocalStorage();
+            showToast('Attendance records saved successfully!', 'success');
+        }
+
+        // ================= CSV EXPORTS & REPORTS =================
+        function exportStudentsCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Student ID,Full Name,Email,Phone,Gender,Department,Course,Status,Admission Date,Address\n";
+
+            students.forEach(s => {
+                let row = [s.studentId, `"${s.name}"`, s.email, s.phone, s.gender, `"${s.department}"`, `"${s.course}"`, s.status, s.date, `"${s.address}"`];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "student_directory_report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Student CSV report downloaded!', 'success');
+        }
+
+        function exportCoursesReport() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Course Name,Department,Credits,Semester\n";
+
+            courses.forEach(c => {
+                let row = [`"${c.name}"`, `"${c.department}"`, c.credits, c.semester];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "course_catalog_report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Course catalog report downloaded!', 'success');
+        }
+
+        function exportAttendanceReport() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Date,Student ID,Student Name,Status\n";
+
+            for (const [date, records] of Object.entries(attendance)) {
+                for (const [sId, status] of Object.entries(records)) {
+                    const st = students.find(item => item.id == sId);
+                    if (st) {
+                        csvContent += `${date},${st.studentId},"${st.name}",${status}\n`;
+                    }
+                }
+            }
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "attendance_analytics_report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Attendance report downloaded!', 'success');
+        }
+
+        // ================= RESET DEMO DATA =================
+        function confirmResetDemoData() {
+            showConfirmDialog('Reset Demo Data', 'This will restore all default students, courses, departments, and reset your modifications. Are you sure?', () => {
+                localStorage.clear();
+                students = JSON.parse(JSON.stringify(defaultStudents));
+                courses = JSON.parse(JSON.stringify(defaultCourses));
+                departments = JSON.parse(JSON.stringify(defaultDepartments));
+                attendance = {};
+                initApp();
+                showToast('Demo data successfully restored!', 'success');
+            });
+        }
+    </script>
+</body>
+</html>
